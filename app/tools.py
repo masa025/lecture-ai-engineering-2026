@@ -5,6 +5,7 @@
 """
 
 import json
+import random
 from functools import cache
 from pathlib import Path
 
@@ -32,7 +33,7 @@ def search_glossary(query: str) -> str:
     """講座の用語集から用語を検索し、定義と、どの回で扱うかを返す。
 
     AIエンジニアリングの用語や、この講座（AIE2026）に固有の言葉について
-    答える前に使うこと。query には調べたい用語を1つだけ入れる（例: "LoRA"）。
+    答える前に使うこと。query には調べたい用語をまとめて入れる（例: "LoRA"）。
     """
     q = _normalize(query)
     if not q:
@@ -63,6 +64,27 @@ def search_glossary(query: str) -> str:
             }
             for e in hits
         ],
+        ensure_ascii=False,
+    )
+
+
+def make_quiz(lecture: int) -> str:
+    """指定した回の用語から、確認問題を1問作って返す。
+
+    「第2回の内容から確認問題を出して」「クイズを出して」のように、
+    学習の確認問題やクイズを求められたときに使う。lecture には対象の回を
+    1始まりの整数で指定する（例: 第2回なら 2）。問題文と答え（用語の定義）を
+    JSONで返すので、まず問題だけを出題し、答えは利用者が答えたあとに示すこと。
+    """
+    terms = [e for e in load_glossary() if e["lecture"] == lecture]
+    if not terms:
+        return f"第{lecture}回の用語は用語集にありません。別の回を指定してください。"
+    entry = random.choice(terms)
+    return json.dumps(
+        {
+            "question": f"「{entry['term']}」の意味は？",
+            "answer": entry["definition"],
+        },
         ensure_ascii=False,
     )
 
